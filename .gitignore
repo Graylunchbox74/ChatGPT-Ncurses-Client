@@ -1,0 +1,5 @@
+bin/
+lib/
+onyx-lsp.ini
+*.wasm
+.vscode/

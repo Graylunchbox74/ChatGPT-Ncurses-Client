@@ -1,0 +1,418 @@
+use package ncurses
+use package core
+#load "./lib/packages"
+#inject json.Use_Any_Encoder :: true
+
+GPTRequestData :: struct {
+    model : str;
+    prompt : str;
+    temperature : f32;
+    max_tokens : i32;
+}
+
+GPTChoice :: struct {
+    text : str;
+    index : i32;
+    finish_reason : str;
+}
+
+GPTUsage :: struct {
+    prompt_tokens : i32;
+    completion_tokens : i32;
+    total_tokens : i32;
+}
+
+GPTResponse :: struct {
+    id : str;
+    object : str;
+    created : i32;
+    model : str;
+    choices : []GPTChoice;
+    usage : GPTUsage;
+}
+
+PastGPTRequest :: struct {
+    prompt : str;
+    answer : str;
+}
+
+initHttp :: () => {
+    client := http.client.Client.{};
+    client.default_headers->set("Content-Type", "application/json");
+    client.default_headers->set("Authorization", "Bearer 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");
+    return client;
+}
+
+max_x : i32;
+max_y : i32;
+main_win : WINDOW;
+initNcurses :: () -> void {
+    main_win = initscr();
+    max_x = getmaxx(main_win);
+    max_y = getmaxy(main_win);
+    raw();
+    curs_set(0);
+    noecho();
+    keypad(main_win, true);
+    timeout(1);
+    
+    start_color();
+    //standard color pair
+    init_pair(1, COLOR_WHITE, COLOR_BLACK);
+    //user input
+    init_pair(2, COLOR_GREEN, COLOR_BLACK);
+    //bot output
+    init_pair(3, COLOR_RED, COLOR_BLACK); 
+    //yellow highlight
+    init_pair(4, COLOR_BLACK, COLOR_YELLOW);   
+}
+
+PastRequests : [..] PastGPTRequest;
+ChatGPTRequest :: (prompt : str) -> Optional(GPTResponse) {
+    data := GPTRequestData.{
+        model = "text-davinci-003",
+        prompt = prompt,
+        temperature = 0.2,
+        max_tokens = 1500
+    };
+    response := client->post("https://api.openai.com/v1/completions", "application/json", json.encode_string(data));
+    if response.status == 200 {
+        resp_str := response->as_json_into(GPTResponse);
+        array.push(^PastRequests, .{
+            prompt = string.alloc_copy(prompt),
+            answer = resp_str.choices[0].text
+        });
+        return Optional.make(resp_str);
+    }
+    else {
+        return .{};
+    }
+}
+
+clearScreen :: () -> void {
+    for y : 0..max_y {
+        for x : 0..max_x {
+            mvprintw(y,x," ");
+        }
+    }
+}
+
+drawBorder :: () -> void {
+    for y : 0..max_y {
+        mvprintw(y, 0, "|");
+        mvprintw(y, max_x-1, "|");        
+    }
+
+    for x : 0..max_x {
+        mvprintw(0, x, "-");
+        mvprintw(max_y-1, x, "-");
+    }
+    mvprintw(0,0,"+");
+    mvprintw(max_y-1,0,"+");
+    mvprintw(0,max_x-1,"+");
+    mvprintw(max_y-1,max_x-1,"+");
+}
+
+drawBotOutputStandard :: (start_y, start_x, end_y, end_x : i32, txt : str) -> void {
+    y := start_y;
+    x := start_x;
+    attr_on(COLOR_PAIR(3), null);
+
+    initial_newlines := true;
+    for tmp_y : start_y..end_y {
+        for tmp_x : start_x..end_x {
+            mvprintw(tmp_y, tmp_x, " ");
+        }
+    }
+
+    word : str;
+
+    for i : 0..txt.length {
+        if txt[i] == #char "\n" {
+            if initial_newlines {
+                continue;
+            }
+            y += 1;
+            x = start_x;
+            word = "";
+        }
+        elseif txt[i] == #char "\t" {
+            mvprintw(y, x, "    ");
+            x += 4;
+        }
+        elseif txt[i] == #char " " {
+            mvprintw(y, x, " ");
+            x += 1;
+        }
+        else {
+            end_idx := i;
+            while end_idx < txt.length && (txt[end_idx] != #char " " && txt[end_idx] != #char "\n" && txt[end_idx] != #char "\t"){
+                end_idx += 1;
+            } 
+            word = txt[i..end_idx+1];
+            if word.length + x > end_x {
+                y += 1;
+                x = start_x;
+            }
+            newline := false;
+            tab := false;
+            if word[word.length - 1] == #char "\n" {
+                newline = true;
+                word = word[0..word.length-1];
+            }
+            elseif word[word.length - 1] == #char "\t" {
+                tab = true;
+                word = word[0..word.length-1];
+            }
+            mvprintw(y, x, tprintf("{}", word));
+            if newline {
+                y += 1;
+                x = start_x;
+                i += word.length;
+            }
+            elseif tab {
+                mvprintw(y, x + word.length, "    ");
+                i += word.length - 1;
+                x += word.length + 4;
+            }
+            else {
+                i += word.length - 1;
+                x += word.length;
+            }
+            initial_newlines = false;
+        }
+        refresh();
+        if x >= end_x - 1 {
+            y += 1;
+            x = start_x;
+        }
+        os.sleep(random.between(15, 30));
+    }
+    attr_off(COLOR_PAIR(3), null);
+}
+
+drawTextFast :: (start_y, start_x, end_y, end_x, color : i32, txt : str) -> void {
+    y := start_y;
+    x := start_x;
+    attr_on(COLOR_PAIR(color), null);
+
+    initial_newlines := true;
+    for tmp_y : start_y..end_y {
+        for tmp_x : start_x..end_x {
+            mvprintw(tmp_y, tmp_x, " ");
+        }
+    }
+
+    word : str;
+
+    for i : 0..txt.length {
+        if txt[i] == #char "\n" {
+            if initial_newlines {
+                continue;
+            }
+            y += 1;
+            x = start_x;
+            word = "";
+        }
+        elseif txt[i] == #char "\t" {
+            mvprintw(y, x, "    ");
+            x += 4;
+        }
+        elseif txt[i] == #char " " {
+            mvprintw(y, x, " ");
+            x += 1;
+        }
+        else {
+            end_idx := i;
+            while end_idx < txt.length && (txt[end_idx] != #char " " && txt[end_idx] != #char "\n" && txt[end_idx] != #char "\t"){
+                end_idx += 1;
+            } 
+            word = txt[i..end_idx+1];
+            if word.length + x > end_x {
+                y += 1;
+                x = start_x;
+            }
+            newline := false;
+            tab := false;
+            if word[word.length - 1] == #char "\n" {
+                newline = true;
+                word = word[0..word.length-1];
+            }
+            elseif word[word.length - 1] == #char "\t" {
+                tab = true;
+                word = word[0..word.length-1];
+            }
+            mvprintw(y, x, tprintf("{}", word));
+            if newline {
+                y += 1;
+                x = start_x;
+                i += word.length;
+            }
+            elseif tab {
+                mvprintw(y, x + word.length, "    ");
+                i += word.length - 1;
+                x += word.length + 4;
+            }
+            else {
+                i += word.length - 1;
+                x += word.length;
+            }
+            initial_newlines = false;
+        }
+        refresh();
+        if x >= end_x - 1 {
+            y += 1;
+            x = start_x;
+        }
+    }
+    attr_off(COLOR_PAIR(color), null);
+}
+
+chatGPTChat :: () -> void {
+    counter := 0;
+    clearScreen();
+    drawBorder();
+    for x : 1..max_x - 1 { 
+        mvprintw(max_y - 6, x, "-");
+    }
+    for y : 1..max_y - 6 {
+        mvprintw(y, max_x / 2, "|");
+    }
+
+    chat_str: dyn_str;
+ 
+    // the_str: [] u8 = chat_str;
+
+    cursor := 0;
+    input := 0;
+    while true {
+        input = getch();
+        if counter == 5000 {
+            old_max_x := max_x;
+            old_max_y := max_y;
+            max_x = getmaxx(main_win);
+            max_y = getmaxy(main_win);
+            if old_max_x != max_x || old_max_y != max_y {
+                clearScreen();
+                drawBorder();
+                //draw user input box top line
+                for x : 1..max_x - 1 { 
+                    mvprintw(max_y - 6, x, "-");
+                }
+                for y : 1..max_y - 6 {
+                    mvprintw(y, max_x / 2, "|");
+                }
+            }
+            counter = 0;
+        }
+        if input == #char "\n" {
+            if chat_str.length > 0 {
+                resp := ChatGPTRequest(chat_str);
+                if resp.has_value {
+                    drawBotOutputStandard(2, 2, max_y - 6, max_x / 2, resp->unwrap().choices[0].text);
+                    cur_y := 1;
+                    for past_req : PastRequests {
+                        drawTextFast(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 2, past_req.prompt);
+                        cur_y += 4;
+                        for x : max_x / 2 + 1..max_x - 1 {
+                            mvprintw(cur_y-1, x, "-");
+                        }
+                    }
+                }
+                else {
+                    drawBotOutputStandard(2, 2, max_y - 6, max_x / 2, "I had an oopsy :(");
+                }
+                string.clear(^chat_str);
+                cursor = 0;
+            }
+        }
+        elseif input >= 32 && input <= 127 {
+            if cursor >= chat_str.length {
+                string.concat(^chat_str, .[ cast(u8) input ]);
+            }
+            else {
+                string.insert(^chat_str, cursor, cast(u8) input);
+            }
+            cursor += 1;
+        }
+        elseif input == 27 {
+            return;
+        }
+        elseif input == 258 {
+            //down
+        }
+        elseif input == 259 {
+            //up
+        }
+        elseif input == 260 {
+            if cursor > 0 {
+                cursor -= 1;
+            }
+        }
+        elseif input == 261 {
+            if cursor < chat_str.length {
+                cursor += 1;
+            }
+        }
+        elseif input == 8  || input == 263 {
+            //backspace
+            if chat_str.length > 0 {
+                string.delete(^chat_str, cursor - 1);
+                cursor -= 1;
+            }
+        }
+        //user input box will be at bottom of the screen (last 4 lines not including border)
+        tmp_counter := 0;
+        for tmp_y : max_y-5..max_y-1 {
+            for tmp_x : 1..max_x-1 {
+                if chat_str.length > tmp_counter {
+                    if cursor == tmp_counter {
+                        attr_on(COLOR_PAIR(4), null);
+                    }
+                    else {
+                        attr_on(COLOR_PAIR(2), null);
+                    }
+                    mvprintw(tmp_y, tmp_x, chat_str[tmp_counter .. tmp_counter + 1]);
+                    if cursor == tmp_counter {
+                        attr_off(COLOR_PAIR(4), null);
+                    }
+                    else {
+                        attr_off(COLOR_PAIR(2), null);
+                    }
+                }
+                else {
+                    if cursor == tmp_counter {
+                        attr_on(COLOR_PAIR(4), null);
+                    }                    
+                    mvprintw(tmp_y, tmp_x, " ");
+                    if cursor == tmp_counter {
+                        attr_off(COLOR_PAIR(4), null);
+                    }
+                }
+                tmp_counter += 1;
+            }
+        }
+
+        counter += 1;
+    }
+}
+
+client : http.client.Client;
+main :: () {
+    client = initHttp();
+
+    defer client->free();
+
+    initNcurses();
+
+    chatGPTChat();
+    // input := getch();
+
+    defer exit_curses(0);
+    defer endwin();
+
+
+}
+
+
+
