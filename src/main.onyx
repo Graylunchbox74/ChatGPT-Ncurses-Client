@@ -39,7 +39,7 @@ PastGPTRequest :: struct {
 initHttp :: () => {
     client := http.client.Client.{};
     client.default_headers->set("Content-Type", "application/json");
-    client.default_headers->set("Authorization", "Bearer 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");
+    client.default_headers->set("Authorization", "Bearer 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");
     return client;
 }
 
@@ -47,10 +47,12 @@ max_x : i32;
 max_y : i32;
 main_win : WINDOW;
 initNcurses :: () -> void {
+    setlocale(LC_ALL, #cstr "");
     main_win = initscr();
     max_x = getmaxx(main_win);
     max_y = getmaxy(main_win);
     raw();
+    cbreak();
     curs_set(0);
     noecho();
     keypad(main_win, true);
@@ -76,6 +78,7 @@ ChatGPTRequest :: (prompt : str) -> Optional(GPTResponse) {
         max_tokens = 1500
     };
     response := client->post("https://api.openai.com/v1/completions", "application/json", json.encode_string(data));
+    log(.Info, tprintf("{*}", response));
     if response.status == 200 {
         resp_str := response->as_json_into(GPTResponse);
         array.push(^PastRequests, .{
@@ -149,7 +152,7 @@ drawBotOutputStandard :: (start_y, start_x, end_y, end_x : i32, txt : str) -> vo
             while end_idx < txt.length && (txt[end_idx] != #char " " && txt[end_idx] != #char "\n" && txt[end_idx] != #char "\t"){
                 end_idx += 1;
             } 
-            word = txt[i..end_idx+1];
+            word = txt[i..math.min(txt.length,end_idx+1)];
             if word.length + x > end_x {
                 y += 1;
                 x = start_x;
@@ -186,7 +189,7 @@ drawBotOutputStandard :: (start_y, start_x, end_y, end_x : i32, txt : str) -> vo
             y += 1;
             x = start_x;
         }
-        os.sleep(random.between(15, 30));
+        os.sleep(random.between(25, 40));
     }
     attr_off(COLOR_PAIR(3), null);
 }
@@ -227,7 +230,7 @@ drawTextFast :: (start_y, start_x, end_y, end_x, color : i32, txt : str) -> void
             while end_idx < txt.length && (txt[end_idx] != #char " " && txt[end_idx] != #char "\n" && txt[end_idx] != #char "\t"){
                 end_idx += 1;
             } 
-            word = txt[i..end_idx+1];
+            word = txt[i..math.min(txt.length,end_idx+1)];
             if word.length + x > end_x {
                 y += 1;
                 x = start_x;
@@ -283,7 +286,12 @@ chatGPTChat :: () -> void {
  
     // the_str: [] u8 = chat_str;
 
+    menu_selected := 0;
     cursor := 0;
+    cursor_x := 0;
+    cursor_y := 0;
+    response_cursor_x := 2;
+    response_cursor_y := 2;
     input := 0;
     while true {
         input = getch();
@@ -293,6 +301,8 @@ chatGPTChat :: () -> void {
             max_x = getmaxx(main_win);
             max_y = getmaxy(main_win);
             if old_max_x != max_x || old_max_y != max_y {
+                response_cursor_x = 2;
+                response_cursor_y = 2;
                 clearScreen();
                 drawBorder();
                 //draw user input box top line
@@ -306,53 +316,133 @@ chatGPTChat :: () -> void {
             counter = 0;
         }
         if input == #char "\n" {
-            if chat_str.length > 0 {
-                resp := ChatGPTRequest(chat_str);
-                if resp.has_value {
-                    drawBotOutputStandard(2, 2, max_y - 6, max_x / 2, resp->unwrap().choices[0].text);
-                    cur_y := 1;
-                    for past_req : PastRequests {
-                        drawTextFast(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 2, past_req.prompt);
-                        cur_y += 4;
-                        for x : max_x / 2 + 1..max_x - 1 {
-                            mvprintw(cur_y-1, x, "-");
+            if menu_selected == 0 {
+                if chat_str.length > 0 {
+                    resp := ChatGPTRequest(chat_str);
+                    if resp.has_value {
+                        drawBotOutputStandard(2, 2, max_y - 6, max_x / 2, resp->unwrap().choices[0].text);
+                        cur_y := 1;
+                        for past_req : PastRequests {
+                            drawTextFast(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 2, past_req.prompt);
+                            cur_y += 4;
+                            for x : max_x / 2 + 1..max_x - 1 {
+                                mvprintw(cur_y-1, x, "-");
+                            }
                         }
                     }
+                    else {
+                        drawBotOutputStandard(2, 2, max_y - 6, max_x / 2, "I had an oopsy :(");
+                    }
+                    string.clear(^chat_str);
+                    cursor = 0;
                 }
-                else {
-                    drawBotOutputStandard(2, 2, max_y - 6, max_x / 2, "I had an oopsy :(");
-                }
-                string.clear(^chat_str);
-                cursor = 0;
             }
         }
         elseif input >= 32 && input <= 127 {
-            if cursor >= chat_str.length {
-                string.concat(^chat_str, .[ cast(u8) input ]);
+            if menu_selected == 0 {
+                if cursor >= chat_str.length {
+                    string.concat(^chat_str, .[ cast(u8) input ]);
+                }
+                else {
+                    string.insert(^chat_str, cursor, cast(u8) input);
+                }
+                cursor += 1;
             }
-            else {
-                string.insert(^chat_str, cursor, cast(u8) input);
-            }
-            cursor += 1;
         }
         elseif input == 27 {
             return;
         }
         elseif input == 258 {
             //down
+            if menu_selected == 1 {
+                if response_cursor_y < max_y - 7 {
+                    char_at_pos := mvinch(response_cursor_y, response_cursor_x) & A_CHARTEXT;
+                    attr_on(COLOR_PAIR(3), null);
+                    mvprintw(response_cursor_y, response_cursor_x, "{}", cast(u8, char_at_pos));
+                    attr_off(COLOR_PAIR(3), null);
+                    response_cursor_y += 1;
+                }
+            }
         }
         elseif input == 259 {
             //up
+            if response_cursor_y > 2 {
+                char_at_pos := mvinch(response_cursor_y, response_cursor_x) & A_CHARTEXT;
+                attr_on(COLOR_PAIR(3), null);
+                mvprintw(response_cursor_y, response_cursor_x, "{}", cast(u8, char_at_pos));
+                attr_off(COLOR_PAIR(3), null);                
+                response_cursor_y -= 1;
+            }
+        }
+        elseif input == 393 || input == 402 {
+            if menu_selected == 0 {
+                //hide cursor
+                attr_on(COLOR_PAIR(2), null);
+                if cursor == chat_str.length {
+                    mvprintw(cursor_y, cursor_x, " ");
+                }
+                else {
+                    mvprintw(cursor_y, cursor_x, chat_str[cursor..cursor+1]);
+                }
+                attr_off(COLOR_PAIR(2), null);
+            }
+            elseif menu_selected == 1 {
+                char_at_pos := mvinch(response_cursor_y, response_cursor_x) & A_CHARTEXT;
+                attr_on(COLOR_PAIR(3), null);
+                mvprintw(response_cursor_y, response_cursor_x, "{}", cast(u8, char_at_pos));
+                attr_off(COLOR_PAIR(3), null);
+            }
+
+            menu_selected = (menu_selected + (2 if input == 393 else 1)) % 3;
         }
         elseif input == 260 {
-            if cursor > 0 {
-                cursor -= 1;
+            if menu_selected == 0 {
+                if cursor > 0 {
+                    cursor -= 1;
+                }
+            }
+            elseif menu_selected == 1 {
+                if response_cursor_x > 2 {
+                    char_at_pos := mvinch(response_cursor_y, response_cursor_x) & A_CHARTEXT;
+                    attr_on(COLOR_PAIR(3), null);
+                    mvprintw(response_cursor_y, response_cursor_x, "{}", cast(u8, char_at_pos));
+                    attr_off(COLOR_PAIR(3), null);
+
+                    response_cursor_x -= 1;
+                }
+                elseif response_cursor_y != 2 {
+                    char_at_pos := mvinch(response_cursor_y, response_cursor_x) & A_CHARTEXT;
+                    attr_on(COLOR_PAIR(3), null);
+                    mvprintw(response_cursor_y, response_cursor_x, "{}", cast(u8, char_at_pos));
+                    attr_off(COLOR_PAIR(3), null);
+                    response_cursor_y -= 1;
+                    response_cursor_x = max_x / 2 - 1;
+                }
             }
         }
         elseif input == 261 {
-            if cursor < chat_str.length {
-                cursor += 1;
+            if menu_selected == 0 {
+                if cursor < chat_str.length {
+                    cursor += 1;
+                }
             }
+            elseif menu_selected == 1 {
+                if response_cursor_x < max_x / 2 - 1 {
+                    char_at_pos := mvinch(response_cursor_y, response_cursor_x) & A_CHARTEXT;
+                    attr_on(COLOR_PAIR(3), null);
+                    mvprintw(response_cursor_y, response_cursor_x, "{}", cast(u8, char_at_pos));
+                    attr_off(COLOR_PAIR(3), null);
+                    response_cursor_x += 1;
+                }
+                elseif response_cursor_y != max_y - 7 {
+                    char_at_pos := mvinch(response_cursor_y, response_cursor_x) & A_CHARTEXT;
+                    attr_on(COLOR_PAIR(3), null);
+                    mvprintw(response_cursor_y, response_cursor_x, "{}", cast(u8, char_at_pos));
+                    attr_off(COLOR_PAIR(3), null);                    
+                    response_cursor_y += 1;
+                    response_cursor_x = 2;
+                }
+            }            
         }
         elseif input == 8  || input == 263 {
             //backspace
@@ -362,35 +452,49 @@ chatGPTChat :: () -> void {
             }
         }
         //user input box will be at bottom of the screen (last 4 lines not including border)
-        tmp_counter := 0;
-        for tmp_y : max_y-5..max_y-1 {
-            for tmp_x : 1..max_x-1 {
-                if chat_str.length > tmp_counter {
-                    if cursor == tmp_counter {
-                        attr_on(COLOR_PAIR(4), null);
+        if menu_selected == 0 {
+            tmp_counter := 0;
+            for tmp_y : max_y-5..max_y-1 {
+                for tmp_x : 1..max_x-1 {
+                    if chat_str.length > tmp_counter {
+                        if cursor == tmp_counter {
+                            attr_on(COLOR_PAIR(4), null);
+                            cursor_x = tmp_x;
+                            cursor_y = tmp_y;
+                        }
+                        else {
+                            attr_on(COLOR_PAIR(2), null);
+                        }
+                        mvprintw(tmp_y, tmp_x, chat_str[tmp_counter .. tmp_counter + 1]);
+                        if cursor == tmp_counter {
+                            attr_off(COLOR_PAIR(4), null);
+                        }
+                        else {
+                            attr_off(COLOR_PAIR(2), null);
+                        }
                     }
                     else {
-                        attr_on(COLOR_PAIR(2), null);
+                        if cursor == tmp_counter {
+                            attr_on(COLOR_PAIR(4), null);
+                            cursor_x = tmp_x;
+                            cursor_y = tmp_y;
+                        }                    
+                        mvprintw(tmp_y, tmp_x, " ");
+                        if cursor == tmp_counter {
+                            attr_off(COLOR_PAIR(4), null);
+                        }
                     }
-                    mvprintw(tmp_y, tmp_x, chat_str[tmp_counter .. tmp_counter + 1]);
-                    if cursor == tmp_counter {
-                        attr_off(COLOR_PAIR(4), null);
-                    }
-                    else {
-                        attr_off(COLOR_PAIR(2), null);
-                    }
+                    tmp_counter += 1;
                 }
-                else {
-                    if cursor == tmp_counter {
-                        attr_on(COLOR_PAIR(4), null);
-                    }                    
-                    mvprintw(tmp_y, tmp_x, " ");
-                    if cursor == tmp_counter {
-                        attr_off(COLOR_PAIR(4), null);
-                    }
-                }
-                tmp_counter += 1;
             }
+        }
+        elseif menu_selected == 1 {
+            //chat response, indicate we are here by highlighting the text, they can navigate it
+            char_at_pos := mvinch(response_cursor_y, response_cursor_x) & A_CHARTEXT;
+            attr_on(COLOR_PAIR(4), null);
+            mvprintw(response_cursor_y, response_cursor_x, "{}", cast(u8, char_at_pos));
+            attr_off(COLOR_PAIR(4), null);
+
         }
 
         counter += 1;
@@ -399,6 +503,9 @@ chatGPTChat :: () -> void {
 
 client : http.client.Client;
 main :: () {
+    file_logger := os.file_logger_open("./log.log")->unwrap();
+    os.file_logger_use(file_logger);
+    defer os.file_logger_close(file_logger);    
     client = initHttp();
 
     defer client->free();
