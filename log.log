@@ -10,3 +10,58 @@
 " }
 [Info] Response { status = 200, headers = Headers[0x135770], body = "{"id":"cmpl-6ru6NPLpOutflrPbPOkwwGyq6USed","object":"text_completion","created":1678305059,"model":"text-davinci-003","choices":[{"text":"\n\nI'm doing great, thanks for asking! How about you?","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":9,"completion_tokens":15,"total_tokens":24}}
 " }
+[Info] Response { status = 401, headers = Headers[0x135C00], body = "{
+    "error": {
+        "message": "Incorrect API key provided: sk-LNJr1***************************************KLno. You can find your API key at https://platform.openai.com/account/api-keys.",
+        "type": "invalid_request_error",
+        "param": null,
+        "code": "invalid_api_key"
+    }
+}
+" }
+[Info] Response { status = 401, headers = Headers[0x1347A0], body = "{
+    "error": {
+        "message": "Incorrect API key provided: sk-LNJr1***************************************KLno. You can find your API key at https://platform.openai.com/account/api-keys.",
+        "type": "invalid_request_error",
+        "param": null,
+        "code": "invalid_api_key"
+    }
+}
+" }
+[Info] Response { status = 401, headers = Headers[0x1353B0], body = "{
+    "error": {
+        "message": "Incorrect API key provided: sk-LNJr1***************************************KLno. You can find your API key at https://platform.openai.com/account/api-keys.",
+        "type": "invalid_request_error",
+        "param": null,
+        "code": "invalid_api_key"
+    }
+}
+" }
+[Info] Response { status = 200, headers = Headers[0x135C20], body = "{"id":"cmpl-6skOZqzyEwt53d3ur8hVtI9LG4S5S","object":"text_completion","created":1678506075,"model":"text-davinci-003","choices":[{"text":"\n\nI'm doing well, thank you. How about you?","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":4,"completion_tokens":14,"total_tokens":18}}
+" }
+[Info] Response { status = 200, headers = Headers[0x134790], body = "{"id":"cmpl-6skOcKHuGMNwnasl9uSdz5yXsekgx","object":"text_completion","created":1678506078,"model":"text-davinci-003","choices":[{"text":"\n\nIf you need help with anything, please let me know and I will do my best to help.","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":2,"completion_tokens":22,"total_tokens":24}}
+" }
+[Info] Response { status = 200, headers = Headers[0x135C10], body = "{"id":"cmpl-6ski89TC71CGvA0caZWNLanwFoNAn","object":"text_completion","created":1678507288,"model":"text-davinci-003","choices":[{"text":"\n\nI'm doing well, thanks for asking. How about you?","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":15,"total_tokens":18}}
+" }
+[Info] Response { status = 200, headers = Headers[0x135C10], body = "{"id":"cmpl-6skmiSPwm6ha1kV9AwXkJHoprg6B5","object":"text_completion","created":1678507572,"model":"text-davinci-003","choices":[{"text":"\n\nI'm doing well, thank you. How about you?","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":14,"total_tokens":17}}
+" }
+[Info] Response { status = 200, headers = Headers[0x134790], body = "{"id":"cmpl-6skmqYmJ5O8eKPpTJ7Q503dHpCZi4","object":"text_completion","created":1678507580,"model":"text-davinci-003","choices":[{"text":"\n\nThat's great to hear!","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":6,"completion_tokens":8,"total_tokens":14}}
+" }
+[Info] Response { status = 200, headers = Headers[0x134DC0], body = "{"id":"cmpl-6skmygqo4SzmKy8P4utmZ0yYzbSfF","object":"text_completion","created":1678507588,"model":"text-davinci-003","choices":[{"text":"\n\n#This script will print out the numbers from 1 to 10\n\nfor i in range(1,11):\n    print(i)","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":5,"completion_tokens":31,"total_tokens":36}}
+" }
+[Info] Response { status = 200, headers = Headers[0x135C10], body = "{"id":"cmpl-6sknq3Fg3ssF9fJA18vJV7bSBFChR","object":"text_completion","created":1678507642,"model":"text-davinci-003","choices":[{"text":" to find the sum of n natural numbers\n\n#include <stdio.h>\n\nint main()\n{\n    int n, i, sum = 0;\n    \n    printf(\"Enter a positive integer: \");\n    scanf(\"%d\", &n);\n\n    for (i = 1; i <= n; ++i)\n    {\n        sum += i;   // sum = sum + i;\n    }\n\n    printf(\"Sum = %d\", sum);\n\n    return 0;\n}","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":4,"completion_tokens":113,"total_tokens":117}}
+" }
+[Info] Response { status = 200, headers = Headers[0x134790], body = "{"id":"cmpl-6sko6QYyOSr4I8xE2lCgSp5RbYKGj","object":"text_completion","created":1678507658,"model":"text-davinci-003","choices":[{"text":"\n\nThis program is a web application that allows users to create and manage their own online store. It provides features such as product management, order processing, payment processing, customer management, and analytics. It also provides a range of customization options to help users create a unique online store that meets their needs.","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":5,"completion_tokens":61,"total_tokens":66}}
+" }
+[Info] Response { status = 200, headers = Headers[0x135A80], body = "{"id":"cmpl-6skoEsR0tAXQuU4x5l2sW9PvCPNaD","object":"text_completion","created":1678507666,"model":"text-davinci-003","choices":[{"text":"\n\nThat's great!","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":6,"total_tokens":9}}
+" }
+[Info] Response { status = 200, headers = Headers[0x135C10], body = "{"id":"cmpl-6skrDkZNl7qEY1R5VNG1BTPPoBAuw","object":"text_completion","created":1678507851,"model":"text-davinci-003","choices":[{"text":"\n\nI'm doing well, thank you. How about you?","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":14,"total_tokens":17}}
+" }
+[Info] Response { status = 200, headers = Headers[0x134790], body = "{"id":"cmpl-6skrOhNdCvFIcgdIm9avdQ7Up0oPO","object":"text_completion","created":1678507862,"model":"text-davinci-003","choices":[{"text":". How about you?","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":13,"completion_tokens":5,"total_tokens":18}}
+" }
+[Info] Response { status = 200, headers = Headers[0x135C10], body = "{"id":"cmpl-6sku2C8GLSpd7bJEMXRHuIFbWSGPw","object":"text_completion","created":1678508026,"model":"text-davinci-003","choices":[{"text":"\n\nI'm doing well, thank you. How about you?","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":14,"total_tokens":17}}
+" }
+[Info] Response { status = 200, headers = Headers[0x134780], body = "{"id":"cmpl-6sku62rwWoAX3njH6xkRhLp2DHo5O","object":"text_completion","created":1678508030,"model":"text-davinci-003","choices":[{"text":"\n\nThat's great to hear!","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":8,"total_tokens":11}}
+" }
+[Info] Response { status = 200, headers = Headers[0x134D70], body = "{"id":"cmpl-6skuB8wfvNKEHKu1OGOion0lTJWPi","object":"text_completion","created":1678508035,"model":"text-davinci-003","choices":[{"text":"\n\nIf you need help with anything, please let me know and I will do my best to help.","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":2,"completion_tokens":22,"total_tokens":24}}
+" }
