@@ -3,7 +3,7 @@ use package core
 #load "./lib/packages"
 #inject json.Use_Any_Encoder :: true
 
-API_KEY := "Bearer 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"
+API_KEY := ""
 
 GPTRequestData :: struct {
     model : str;
@@ -212,6 +212,7 @@ drawBotOutputStandard :: (start_y, start_x, end_y, end_x, offset : i32, txt : st
 }
 
 drawTextFast :: (start_y, start_x, end_y, end_x, color, offset : i32, txt : str) -> void {
+    line_counter := 0;
     y := start_y;
     x := start_x;
     attr_on(COLOR_PAIR(color), null);
@@ -230,18 +231,22 @@ drawTextFast :: (start_y, start_x, end_y, end_x, color, offset : i32, txt : str)
             if initial_newlines {
                 continue;
             }
-            y += 1;
+            if line_counter >= offset {
+                y += 1;
+            }
             x = start_x;
             word = "";
+            line_counter += 1;
         }
         elseif txt[i] == #char "\t" {
-            if y >= offset && y < end_y {
+            if line_counter >= offset && y < end_y {
                 mvprintw(y, x, "    ");
             }
+
             x += 4;
         }
         elseif txt[i] == #char " " {
-            if y >= offset && y < end_y {
+            if line_counter >= offset && y < end_y {
                 mvprintw(y, x, " ");
             }
             x += 1;
@@ -253,8 +258,11 @@ drawTextFast :: (start_y, start_x, end_y, end_x, color, offset : i32, txt : str)
             } 
             word = txt[i..math.min(txt.length,end_idx+1)];
             if word.length + x > end_x {
-                y += 1;
+                if line_counter >= offset {
+                    y += 1;
+                }
                 x = start_x;
+                line_counter += 1;
             }
             newline := false;
             tab := false;
@@ -267,16 +275,19 @@ drawTextFast :: (start_y, start_x, end_y, end_x, color, offset : i32, txt : str)
                 word = word[0..word.length-1];
             }
 
-            if y >= offset && y < end_y {
+            if line_counter >= offset && y < end_y {
                 mvprintw(y, x, tprintf("{}", word));
             }
             if newline {
-                y += 1;
+                if line_counter >= offset {
+                    y += 1;
+                }
+                line_counter += 1;
                 x = start_x;
                 i += word.length;
             }
             elseif tab {
-                if y >= offset && y < end_y {
+                if line_counter >= offset && y < end_y {
                     mvprintw(y, x + word.length, "    ");
                 }
                 i += word.length - 1;
@@ -289,12 +300,15 @@ drawTextFast :: (start_y, start_x, end_y, end_x, color, offset : i32, txt : str)
             initial_newlines = false;
         }
         refresh();
-        if y > end_y {
+        if y >= end_y {
             attr_off(COLOR_PAIR(color), null);
             return;
         }
         if x >= end_x - 1 {
-            y += 1;
+            if line_counter >= offset {
+                y += 1;
+            }
+            line_counter += 1;
             x = start_x;
         }
     }
@@ -317,17 +331,19 @@ chatGPTChat :: () -> void {
     // the_str: [] u8 = chat_str;
 
     menu_selected := 0;
+    printed_response := 0;
     cursor := 0;
     cursor_x := 0;
     cursor_y := 0;
     response_cursor_x := 2;
-    response_cursor_y := 2;
+    response_cursor_y := 1;
     input := 0;
     previous_chat_selected := 0;
     response_offset := 0;
     previous_offset := 0;
     while true {
         input = getch();
+        mvprintw(0,0,"{}",previous_offset);        
         if counter == 5000 {
             old_max_x := max_x;
             old_max_y := max_y;
@@ -354,7 +370,8 @@ chatGPTChat :: () -> void {
                 if chat_str.length > 0 {
                     resp := ChatGPTRequest(chat_str);
                     if resp.has_value {
-                        drawBotOutputStandard(2, 2, max_y - 6, max_x / 2, response_offset, resp->unwrap().choices[0].text);
+                        drawBotOutputStandard(1, 2, max_y - 6, max_x / 2, response_offset, resp->unwrap().choices[0].text);
+                        printed_response = PastRequests.length - 1;
                         cur_y := 1;
                         for past_req : PastRequests {
                             if cur_y + 3 > max_y - 6 {
@@ -378,7 +395,9 @@ chatGPTChat :: () -> void {
 
             }
             if menu_selected == 2 {
-                drawBotOutputStandard(2, 2, max_y - 6, max_x / 2, 0, PastRequests[previous_chat_selected].answer);
+                drawBotOutputStandard(1, 2, max_y - 6, max_x / 2, 0, PastRequests[previous_chat_selected].answer);
+                printed_response = previous_chat_selected;
+                response_offset = 0;
             }
         }
         elseif input >= 32 && input <= 127 {
@@ -405,10 +424,14 @@ chatGPTChat :: () -> void {
                     attr_off(COLOR_PAIR(3), null);
                     response_cursor_y += 1;
                 }
+                else {
+                    response_offset = response_offset + 1;
+                    drawTextFast(1, 2, max_y - 6, max_x / 2, 3, response_offset, PastRequests[printed_response].answer);
+                }
             }
             elseif menu_selected == 2 {
                 if previous_chat_selected < PastRequests.length - 1 {
-                    if 0 == (previous_chat_selected - previous_offset + 1) - ((max_y - 7) / 4) {
+                    if (previous_chat_selected - previous_offset + 1) == ((max_y - 7) / 4) {
                         previous_offset += 1;
                     }
                     previous_chat_selected += 1;
@@ -423,10 +446,10 @@ chatGPTChat :: () -> void {
                             break;
                         }
                         if tmp_counter == previous_chat_selected {
-                            drawTextFast(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 4, previous_offset * 4 - 1, past_req.prompt);
+                            drawTextFast(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 4, 0, past_req.prompt);
                         }
                         else{
-                            drawTextFast(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 2, previous_offset * 4 - 1, past_req.prompt);                            
+                            drawTextFast(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 2, 0, past_req.prompt);                            
                         }
                         cur_y += 4;
                         for x : max_x / 2 + 1..max_x - 1 {
@@ -439,31 +462,40 @@ chatGPTChat :: () -> void {
         }
         elseif input == 259 {
             //up
-            if response_cursor_y > 2 {
-                char_at_pos := mvinch(response_cursor_y, response_cursor_x) & A_CHARTEXT;
-                attr_on(COLOR_PAIR(3), null);
-                mvprintw(response_cursor_y, response_cursor_x, "{}", cast(u8, char_at_pos));
-                attr_off(COLOR_PAIR(3), null);                
-                response_cursor_y -= 1;
+            if menu_selected == 1 {
+                if response_cursor_y > 1 {
+                    char_at_pos := mvinch(response_cursor_y, response_cursor_x) & A_CHARTEXT;
+                    attr_on(COLOR_PAIR(3), null);
+                    mvprintw(response_cursor_y, response_cursor_x, "{}", cast(u8, char_at_pos));
+                    attr_off(COLOR_PAIR(3), null);                
+                    response_cursor_y -= 1;
+                }
+                else { 
+                    response_offset = math.max_poly( 0, response_offset - 1);
+                    drawTextFast(1, 2, max_y - 6, max_x / 2, 3, response_offset, PastRequests[printed_response].answer);
+                }
             }
             elseif menu_selected == 2 {
                 if previous_chat_selected > 0 {
                     if previous_chat_selected == previous_offset {
-                        mvprintw(0, 0, "{} {}", previous_chat_selected, previous_offset);
                         previous_offset -= 1;
                     }
                     previous_chat_selected -= 1;
                     tmp_counter := 0;
                     cur_y := 1;
                     for past_req : PastRequests {
+                        if tmp_counter < previous_offset { 
+                            tmp_counter += 1;
+                            continue;
+                        }                        
                         if cur_y + 3 > max_y - 6 {
                             break;
                         }
                         if tmp_counter == previous_chat_selected {
-                            drawTextFast(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 4, previous_offset * 4 - 1, past_req.prompt);
+                            drawTextFast(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 4, 0, past_req.prompt);
                         }
                         else{
-                            drawTextFast(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 2, previous_offset * 4 - 1, past_req.prompt);                            
+                            drawTextFast(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 2, 0, past_req.prompt);                            
                         }
                         cur_y += 4;
                         for x : max_x / 2 + 1..max_x - 1 {
@@ -495,7 +527,7 @@ chatGPTChat :: () -> void {
                 tmp_counter := 0;
                 cur_y := 1;
                 for past_req : PastRequests {
-                    drawTextFast(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 2, previous_offset * 4 - 1, past_req.prompt);                            
+                    drawTextFast(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 2, previous_offset * 4 - 1, past_req.prompt);                            
                     cur_y += 4;
                     for x : max_x / 2 + 1..max_x - 1 {
                         mvprintw(cur_y-1, x, "-");
@@ -625,7 +657,6 @@ chatGPTChat :: () -> void {
             attr_on(COLOR_PAIR(4), null);
             mvprintw(response_cursor_y, response_cursor_x, "{}", cast(u8, char_at_pos));
             attr_off(COLOR_PAIR(4), null);
-
         }
 
         counter += 1;
