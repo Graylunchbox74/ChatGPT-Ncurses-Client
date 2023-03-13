@@ -3,7 +3,7 @@ use package core
 #load "./lib/packages"
 #inject json.Use_Any_Encoder :: true
 
-API_KEY := ""
+API_KEY : str;
 
 GPTRequestData :: struct {
     model : str;
@@ -118,100 +118,7 @@ drawBorder :: () -> void {
     mvprintw(max_y-1,max_x-1,"+");
 }
 
-drawBotOutputStandard :: (start_y, start_x, end_y, end_x, offset : i32, txt : str) -> void {
-    y := start_y;
-    x := start_x;
-    attr_on(COLOR_PAIR(3), null);
-
-    initial_newlines := true;
-    for tmp_y : start_y..end_y {
-        for tmp_x : start_x..end_x {
-            mvprintw(tmp_y, tmp_x, " ");
-        }
-    }
-
-    word : str;
-
-    for i : 0..txt.length {
-        if txt[i] == #char "\n" {
-            if initial_newlines {
-                continue;
-            }
-            y += 1;
-            x = start_x;
-            word = "";
-        }
-        elseif txt[i] == #char "\t" {
-            if y >= offset && y < end_y {
-                mvprintw(y, x, "    ");
-            }
-            x += 4;
-        }
-        elseif txt[i] == #char " " {
-            if y >= offset && y < end_y {
-                mvprintw(y, x, " ");
-            }
-            x += 1;
-        }
-        else {
-            end_idx := i;
-            while end_idx < txt.length && (txt[end_idx] != #char " " && txt[end_idx] != #char "\n" && txt[end_idx] != #char "\t"){
-                end_idx += 1;
-            } 
-            word = txt[i..math.min(txt.length,end_idx+1)];
-            if word.length + x > end_x {
-                y += 1;
-                x = start_x;
-            }
-            newline := false;
-            tab := false;
-            if word[word.length - 1] == #char "\n" {
-                newline = true;
-                word = word[0..word.length-1];
-            }
-            elseif word[word.length - 1] == #char "\t" {
-                tab = true;
-                word = word[0..word.length-1];
-            }
-
-            if y >= offset && y < end_y {
-                mvprintw(y, x, tprintf("{}", word));
-            }
-            if newline {
-                y += 1;
-                x = start_x;
-                i += word.length;
-            }
-            elseif tab {
-                if y >= offset && y < end_y {
-                    mvprintw(y, x + word.length, "    ");
-                }
-                i += word.length - 1;
-                x += word.length + 4;
-            }
-            else {
-                i += word.length - 1;
-                x += word.length;
-            }
-            initial_newlines = false;
-        }
-        refresh();
-        if y > end_y {
-            attr_off(COLOR_PAIR(3), null);
-            return;
-        }
-        if x >= end_x - 1 {
-            y += 1;
-            x = start_x;
-        }
-        if y >= offset && y < end_y {
-            os.sleep(random.between(25, 40));
-        }
-    }
-    attr_off(COLOR_PAIR(3), null);
-}
-
-drawTextFast :: (start_y, start_x, end_y, end_x, color, offset : i32, txt : str) -> void {
+drawText :: (start_y, start_x, end_y, end_x, color, offset : i32, sleep_range : range, txt : str) -> void {
     line_counter := 0;
     y := start_y;
     x := start_x;
@@ -311,6 +218,9 @@ drawTextFast :: (start_y, start_x, end_y, end_x, color, offset : i32, txt : str)
             line_counter += 1;
             x = start_x;
         }
+        if line_counter >= offset {
+            os.sleep(random.between(sleep_range.low, sleep_range.high));
+        }
     }
     attr_off(COLOR_PAIR(color), null);
 }
@@ -343,7 +253,6 @@ chatGPTChat :: () -> void {
     previous_offset := 0;
     while true {
         input = getch();
-        mvprintw(0,0,"{}",previous_offset);        
         if counter == 5000 {
             old_max_x := max_x;
             old_max_y := max_y;
@@ -370,14 +279,14 @@ chatGPTChat :: () -> void {
                 if chat_str.length > 0 {
                     resp := ChatGPTRequest(chat_str);
                     if resp.has_value {
-                        drawBotOutputStandard(1, 2, max_y - 6, max_x / 2, response_offset, resp->unwrap().choices[0].text);
+                        drawText(1, 2, max_y - 6, max_x / 2, 3, response_offset, 20 .. 40, resp->unwrap().choices[0].text);
                         printed_response = PastRequests.length - 1;
                         cur_y := 1;
                         for past_req : PastRequests {
                             if cur_y + 3 > max_y - 6 {
                                 break;
                             }
-                            drawTextFast(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 2, previous_offset * 4 - 1, past_req.prompt);
+                            drawText(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 2, previous_offset * 4 - 1, 0..0, past_req.prompt);
                             cur_y += 4;
                             for x : max_x / 2 + 1..max_x - 1 {
                                 mvprintw(cur_y-1, x, "-");
@@ -385,7 +294,7 @@ chatGPTChat :: () -> void {
                         }
                     }
                     else {
-                        drawBotOutputStandard(2, 2, max_y - 6, max_x / 2, 0, "I had an oopsy :(");
+                        drawText(2, 2, max_y - 6, max_x / 2, 3, 0, 0..0, "I had an oopsy :(");
                     }
                     string.clear(^chat_str);
                     cursor = 0;
@@ -395,7 +304,7 @@ chatGPTChat :: () -> void {
 
             }
             if menu_selected == 2 {
-                drawBotOutputStandard(1, 2, max_y - 6, max_x / 2, 0, PastRequests[previous_chat_selected].answer);
+                drawText(1, 2, max_y - 6, max_x / 2, 3, 0, 10..20, PastRequests[previous_chat_selected].answer);
                 printed_response = previous_chat_selected;
                 response_offset = 0;
             }
@@ -426,7 +335,7 @@ chatGPTChat :: () -> void {
                 }
                 else {
                     response_offset = response_offset + 1;
-                    drawTextFast(1, 2, max_y - 6, max_x / 2, 3, response_offset, PastRequests[printed_response].answer);
+                    drawText(1, 2, max_y - 6, max_x / 2, 3, response_offset, 0..0, PastRequests[printed_response].answer);
                 }
             }
             elseif menu_selected == 2 {
@@ -446,10 +355,10 @@ chatGPTChat :: () -> void {
                             break;
                         }
                         if tmp_counter == previous_chat_selected {
-                            drawTextFast(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 4, 0, past_req.prompt);
+                            drawText(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 4, 0, 0..0, past_req.prompt);
                         }
                         else{
-                            drawTextFast(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 2, 0, past_req.prompt);                            
+                            drawText(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 2, 0, 0..0, past_req.prompt);                            
                         }
                         cur_y += 4;
                         for x : max_x / 2 + 1..max_x - 1 {
@@ -472,7 +381,7 @@ chatGPTChat :: () -> void {
                 }
                 else { 
                     response_offset = math.max_poly( 0, response_offset - 1);
-                    drawTextFast(1, 2, max_y - 6, max_x / 2, 3, response_offset, PastRequests[printed_response].answer);
+                    drawText(1, 2, max_y - 6, max_x / 2, 3, response_offset, 0..0, PastRequests[printed_response].answer);
                 }
             }
             elseif menu_selected == 2 {
@@ -492,10 +401,10 @@ chatGPTChat :: () -> void {
                             break;
                         }
                         if tmp_counter == previous_chat_selected {
-                            drawTextFast(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 4, 0, past_req.prompt);
+                            drawText(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 4, 0, 0..0, past_req.prompt);
                         }
                         else{
-                            drawTextFast(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 2, 0, past_req.prompt);                            
+                            drawText(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 2, 0, 0..0, past_req.prompt);                            
                         }
                         cur_y += 4;
                         for x : max_x / 2 + 1..max_x - 1 {
@@ -527,7 +436,7 @@ chatGPTChat :: () -> void {
                 tmp_counter := 0;
                 cur_y := 1;
                 for past_req : PastRequests {
-                    drawTextFast(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 2, previous_offset * 4 - 1, past_req.prompt);                            
+                    drawText(cur_y, max_x / 2 + 1, (cur_y + 3) % (max_y - 6), max_x - 2, 2, previous_offset * 4 - 1, 0..0, past_req.prompt);                            
                     cur_y += 4;
                     for x : max_x / 2 + 1..max_x - 1 {
                         mvprintw(cur_y-1, x, "-");
@@ -545,10 +454,10 @@ chatGPTChat :: () -> void {
                         break;
                     }
                     if tmp_counter == previous_chat_selected {
-                        drawTextFast(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 4, previous_offset * 4 - 1, past_req.prompt);
+                        drawText(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 4, previous_offset * 4 - 1, 0..0, past_req.prompt);
                     }
                     else{
-                        drawTextFast(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 2, previous_offset * 4 - 1, past_req.prompt);                            
+                        drawText(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 2, previous_offset * 4 - 1, 0..0, past_req.prompt);                            
                     }
                     cur_y += 4;
                     for x : max_x / 2 + 1..max_x - 1 {
@@ -668,6 +577,8 @@ main :: () {
     file_logger := os.file_logger_open("./log.log")->unwrap();
     os.file_logger_use(file_logger);
     defer os.file_logger_close(file_logger);    
+
+    API_KEY = #file_contents "secret.key";
     client = initHttp();
 
     defer client->free();

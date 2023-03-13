@@ -3,3 +3,4 @@ lib/
 onyx-lsp.ini
 *.wasm
 .vscode/
+secret.key
