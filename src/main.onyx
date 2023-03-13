@@ -408,7 +408,7 @@ chatGPTChat :: () -> void {
                     response_cursor_y -= 1;
                 }
                 else { 
-                    response_offset = math.max_poly( 0, response_offset - 1);
+                    response_offset = math.max( 0, response_offset - 1);
                     drawText(1, 2, max_y - 6, max_x / 2, 3, response_offset, 0..0, PastRequests[printed_response].answer);
                 }
             }
