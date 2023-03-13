@@ -183,7 +183,14 @@ drawText :: (start_y, start_x, end_y, end_x, color, offset : i32, sleep_range : 
             }
 
             if line_counter >= offset && y < end_y {
-                mvprintw(y, x, tprintf("{}", word));
+                if word.length < end_x - x {
+                    mvprintw(y, x, tprintf("{}", word));
+                }
+                else {
+                    for tmp_x : x .. end_x {
+                        mvprintw(y, tmp_x, tprintf("{}", word[tmp_x - x]));
+                    }
+                }
             }
             if newline {
                 if line_counter >= offset {
@@ -270,6 +277,27 @@ chatGPTChat :: () -> void {
                 for y : 1..max_y - 6 {
                     mvprintw(y, max_x / 2, "|");
                 }
+                drawText(1, 2, max_y - 6, max_x / 2, 3, response_offset, 0..0, PastRequests[printed_response].answer);
+                tmp_counter := 0;
+                cur_y := 1;
+                for past_req : PastRequests {
+                    if cur_y + 3 > max_y - 6 {
+                        break;
+                    }
+                    if tmp_counter == previous_chat_selected && menu_selected == 2 {
+                        drawText(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 4, previous_offset * 4 - 1, 0..0, past_req.prompt);
+                    }
+                    else{
+                        drawText(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 2, previous_offset * 4 - 1, 0..0, past_req.prompt);                            
+                    }
+                    cur_y += 4;
+                    if cur_y < max_y - 6 {
+                        for x : max_x / 2 + 1..max_x - 1 {
+                            mvprintw(cur_y-1, x, "-");
+                        }
+                    }
+                    tmp_counter += 1;
+                }                
             }
             counter = 0;
         }
@@ -460,8 +488,10 @@ chatGPTChat :: () -> void {
                         drawText(cur_y, max_x / 2 + 1, cur_y + 3, max_x - 2, 2, previous_offset * 4 - 1, 0..0, past_req.prompt);                            
                     }
                     cur_y += 4;
-                    for x : max_x / 2 + 1..max_x - 1 {
-                        mvprintw(cur_y-1, x, "-");
+                    if cur_y < max_y - 6 {
+                        for x : max_x / 2 + 1..max_x - 1 {
+                            mvprintw(cur_y-1, x, "-");
+                        }
                     }
                     tmp_counter += 1;
                 }
