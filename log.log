@@ -420,3 +420,25 @@
 " }
 [Info] Response { status = 200, headers = Headers[0x1376E0], body = "{"id":"cmpl-6tgrcI82fYpxIBGDH3Hw4NI6K2pKP","object":"text_completion","created":1678730828,"model":"text-davinci-003","choices":[{"text":"\n\nWowzer is an online platform that provides businesses with a comprehensive suite of tools to manage their employee performance, engagement, and development. It includes features such as performance reviews, goal tracking, feedback, recognition, and rewards. It also provides analytics and insights to help businesses understand their workforce and make better decisions.","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":2,"completion_tokens":63,"total_tokens":65}}
 " }
+[Info] Response { status = 200, headers = Headers[0x135C00], body = "{"id":"cmpl-6th2cf5QXMEBV3S9sN9Q8FBxhLA2G","object":"text_completion","created":1678731510,"model":"text-davinci-003","choices":[{"text":"\n\n😃😊😎😍","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":5,"completion_tokens":10,"total_tokens":15}}
+" }
+[Info] Response { status = 200, headers = Headers[0x1347A0], body = "{"id":"cmpl-6th2lSU7sYQ7KgRGo6Miajpn7sVRD","object":"text_completion","created":1678731519,"model":"text-davinci-003","choices":[{"text":"\n\n😃","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":4,"total_tokens":7}}
+" }
+[Info] Response { status = 200, headers = Headers[0x135BF0], body = "{"id":"cmpl-6th5JUNEQ0N7MpYCSYBUAZBNl0cMF","object":"text_completion","created":1678731677,"model":"text-davinci-003","choices":[{"text":"\n\n😃","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":2,"completion_tokens":4,"total_tokens":6}}
+" }
+[Info] Response { status = 200, headers = Headers[0x135C10], body = "{"id":"cmpl-6thAgMNaSMw0nA7fKMGbHAgRBY5na","object":"text_completion","created":1678732010,"model":"text-davinci-003","choices":[{"text":"\n\n😃😄😁","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":4,"completion_tokens":8,"total_tokens":12}}
+" }
+[Info] Response { status = 200, headers = Headers[0x134790], body = "{"id":"cmpl-6thB85FL7AiaP6bZOp82LDtHsDdOm","object":"text_completion","created":1678732038,"model":"text-davinci-003","choices":[{"text":"\n\n🃏, 🂡, 🂱, 🃁, 🂽","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":7,"completion_tokens":21,"total_tokens":28}}
+" }
+[Info] Response { status = 200, headers = Headers[0x134DC0], body = "{"id":"cmpl-6thBNhwKgoQdmG9gImu0G5DxVU0SZ","object":"text_completion","created":1678732053,"model":"text-davinci-003","choices":[{"text":"\n\n🃏🂡🂢🂣🂤🂥🂦🂧🂨🂩🂪🂫🂬🂭🂮","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":7,"completion_tokens":45,"total_tokens":52}}
+" }
+[Info] Response { status = 200, headers = Headers[0x137EF0], body = "{"id":"cmpl-6thBYZrKTgWLvM4GDQSthpXoGZgGU","object":"text_completion","created":1678732064,"model":"text-davinci-003","choices":[{"text":"\n\n🃏🂡🃁","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":6,"completion_tokens":11,"total_tokens":17}}
+" }
+[Info] Response { status = 200, headers = Headers[0x135C20], body = "{"id":"cmpl-6thCZpLXkr7kv8u3jBXIQm5mL7pBb","object":"text_completion","created":1678732127,"model":"text-davinci-003","choices":[{"text":"\n\nA playing card typically consists of a face, a back, and a border. The face of the card usually features a picture or symbol, and the back of the card is usually plain. The border of the card is typically a pattern or color.","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":52,"total_tokens":55}}
+" }
+[Info] Response { status = 200, headers = Headers[0x1347C0], body = "{"id":"cmpl-6thCh9pDeVh6HXMKp6NG8sq1eGHEA","object":"text_completion","created":1678732135,"model":"text-davinci-003","choices":[{"text":"\n\n🃏 🂡 🃁 🂱 🂽 🃑 🂩 🃎","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":6,"completion_tokens":26,"total_tokens":32}}
+" }
+[Info] Response { status = 200, headers = Headers[0x135BF0], body = "{"id":"cmpl-6thFIZrlUYUcavAt1bsQMKKgFcwEf","object":"text_completion","created":1678732296,"model":"text-davinci-003","choices":[{"text":"orld\n\nHello World!","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":2,"completion_tokens":6,"total_tokens":8}}
+" }
+[Info] Response { status = 200, headers = Headers[0x134790], body = "{"id":"cmpl-6thFUKFBkIVFkJLJqjkDX1xzRRlnp","object":"text_completion","created":1678732308,"model":"text-davinci-003","choices":[{"text":"\n\n😃","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":4,"total_tokens":7}}
+" }

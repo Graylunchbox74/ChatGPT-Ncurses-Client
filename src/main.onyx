@@ -49,7 +49,7 @@ max_x : i32;
 max_y : i32;
 main_win : WINDOW;
 initNcurses :: () -> void {
-    setlocale(LC_ALL, #cstr "");
+    setlocale(LC_ALL, ~~u8.[0]);
     main_win = initscr();
     max_x = getmaxx(main_win);
     max_y = getmaxy(main_win);
@@ -161,8 +161,8 @@ drawText :: (start_y, start_x, end_y, end_x, color, offset : i32, sleep_range : 
         else {
             end_idx := i;
             while end_idx < txt.length && (txt[end_idx] != #char " " && txt[end_idx] != #char "\n" && txt[end_idx] != #char "\t"){
-                end_idx += 1;
-            } 
+                end_idx += encoding.utf8.rune_length_from_first_byte(txt[end_idx]);
+            }
             word = txt[i..math.min(txt.length,end_idx+1)];
             if word.length + x > end_x {
                 if line_counter >= offset {
@@ -245,8 +245,6 @@ chatGPTChat :: () -> void {
 
     chat_str: dyn_str;
  
-    // the_str: [] u8 = chat_str;
-
     menu_selected := 0;
     printed_response := 0;
     cursor := 0;
@@ -512,7 +510,7 @@ chatGPTChat :: () -> void {
 
                     response_cursor_x -= 1;
                 }
-                elseif response_cursor_y != 2 {
+                elseif response_cursor_y != 1 {
                     char_at_pos := mvinch(response_cursor_y, response_cursor_x) & A_CHARTEXT;
                     attr_on(COLOR_PAIR(3), null);
                     mvprintw(response_cursor_y, response_cursor_x, "{}", cast(u8, char_at_pos));
